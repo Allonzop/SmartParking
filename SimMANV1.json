@@ -5,6 +5,7 @@
   "parts": [
     { "type": "wokwi-arduino-mega", "id": "mega", "top": 0, "left": 0, "attrs": {} },
     { "type": "wokwi-lcd2004", "id": "lcd1", "top": -200, "left": 100, "attrs": { "pins": "i2c" } },
+    { "type": "wokwi-pushbutton", "id": "btn1", "top": 150, "left": -150, "attrs": { "color": "blue", "label": "ENTREE" } },
     
     { "type": "wokwi-hc-sr04", "id": "u0", "top": 350, "left": -200, "attrs": {} },
     { "type": "wokwi-led", "id": "r0", "top": 300, "left": -190, "attrs": { "color": "red" } },
@@ -39,6 +40,9 @@
     { "type": "wokwi-led", "id": "g9", "top": 500, "left": 430, "attrs": { "color": "green" } }
   ],
   "connections": [
+    [ "btn1:1.l", "mega:GND.2", "black", [] ],
+    [ "btn1:2.r", "mega:44", "blue", [] ],
+    
     [ "lcd1:SDA", "mega:20", "green", [] ],
     [ "lcd1:SCL", "mega:21", "yellow", [] ],
     [ "lcd1:VCC", "mega:5V", "red", [] ],
