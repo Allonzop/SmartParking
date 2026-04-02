@@ -120,22 +120,24 @@ void loop() {
   // 3. AFFICHAGE LCD
   // Lignes de stats fixes
   lcd.setCursor(0, 0);
-  lcd.print("Zone A: "); lcd.print(libresA); lcd.print(" Libres ");
+  lcd.print("Zone A: "); lcd.print(libresA); lcd.print(" libres  ");
+  
   lcd.setCursor(0, 1);
-  lcd.print("Zone B: "); lcd.print(libresB); lcd.print(" Libres ");
+  lcd.print("Zone B: "); lcd.print(libresB); lcd.print(" libres  ");
 
   // Ligne d'intelligence (Message temporaire)
   lcd.setCursor(0, 3);
   if (maintenant - tempsDernierMessage < 3000) { // Affiche le message pendant 3s
     if(placeAffichee > 0) {
-      lcd.print("ALLEZ PLACE: P"); lcd.print(placeAffichee);
-      lcd.print("    ");
+      lcd.print("ALLEZ EN PLACE P"); lcd.print(placeAffichee);
+      lcd.print("   "); // Les espaces nettoient la fin de ligne
     } else if (placeAffichee == 0) {
-      lcd.print("!! PARKING PLEIN !! ");
+      lcd.print("!! PARKING PLEIN !! "); // Pile 20 caractères
     }
   } else {
-    lcd.print("BIENVENUE - DISPO: "); 
+    // Raccourci pour ne pas dépasser 20 caractères au total !
+    lcd.print("TOTAL LIBRES : "); 
     lcd.print(libresA + libresB);
-    lcd.print(" ");
+    lcd.print("    "); // Nettoie les anciens caractères
   }
 }
