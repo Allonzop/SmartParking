@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "author": "Gemini",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-mega", "id": "mega", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-lcd2004", "id": "lcd1", "top": -200, "left": 100, "attrs": { "pins": "i2c" } },
+    
+    { "type": "wokwi-hc-sr04", "id": "u0", "top": 350, "left": -200, "attrs": {} },
+    { "type": "wokwi-led", "id": "r0", "top": 300, "left": -190, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g0", "top": 300, "left": -170, "attrs": { "color": "green" } },
+    { "type": "wokwi-hc-sr04", "id": "u1", "top": 350, "left": -50, "attrs": {} },
+    { "type": "wokwi-led", "id": "r1", "top": 300, "left": -40, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g1", "top": 300, "left": -20, "attrs": { "color": "green" } },
+    { "type": "wokwi-hc-sr04", "id": "u2", "top": 350, "left": 100, "attrs": {} },
+    { "type": "wokwi-led", "id": "r2", "top": 300, "left": 110, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g2", "top": 300, "left": 130, "attrs": { "color": "green" } },
+    { "type": "wokwi-hc-sr04", "id": "u3", "top": 350, "left": 250, "attrs": {} },
+    { "type": "wokwi-led", "id": "r3", "top": 300, "left": 260, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g3", "top": 300, "left": 280, "attrs": { "color": "green" } },
+    { "type": "wokwi-hc-sr04", "id": "u4", "top": 350, "left": 400, "attrs": {} },
+    { "type": "wokwi-led", "id": "r4", "top": 300, "left": 410, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g4", "top": 300, "left": 430, "attrs": { "color": "green" } },
+    
+    { "type": "wokwi-hc-sr04", "id": "u5", "top": 550, "left": -200, "attrs": {} },
+    { "type": "wokwi-led", "id": "r5", "top": 500, "left": -190, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g5", "top": 500, "left": -170, "attrs": { "color": "green" } },
+    { "type": "wokwi-hc-sr04", "id": "u6", "top": 550, "left": -50, "attrs": {} },
+    { "type": "wokwi-led", "id": "r6", "top": 500, "left": -40, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g6", "top": 500, "left": -20, "attrs": { "color": "green" } },
+    { "type": "wokwi-hc-sr04", "id": "u7", "top": 550, "left": 100, "attrs": {} },
+    { "type": "wokwi-led", "id": "r7", "top": 500, "left": 110, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g7", "top": 500, "left": 130, "attrs": { "color": "green" } },
+    { "type": "wokwi-hc-sr04", "id": "u8", "top": 550, "left": 250, "attrs": {} },
+    { "type": "wokwi-led", "id": "r8", "top": 500, "left": 260, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g8", "top": 500, "left": 280, "attrs": { "color": "green" } },
+    { "type": "wokwi-hc-sr04", "id": "u9", "top": 550, "left": 400, "attrs": {} },
+    { "type": "wokwi-led", "id": "r9", "top": 500, "left": 410, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g9", "top": 500, "left": 430, "attrs": { "color": "green" } }
+  ],
+  "connections": [
+    [ "lcd1:SDA", "mega:20", "green", [] ],
+    [ "lcd1:SCL", "mega:21", "yellow", [] ],
+    [ "lcd1:VCC", "mega:5V", "red", [] ],
+    [ "lcd1:GND", "mega:GND.1", "black", [] ],
+    
+    [ "u0:VCC", "mega:5V", "red", [] ], [ "u0:GND", "mega:GND.1", "black", [] ], [ "u0:TRIG", "mega:22", "purple", [] ], [ "u0:ECHO", "mega:23", "orange", [] ],
+    [ "r0:A", "mega:2", "red", [] ], [ "r0:C", "mega:GND.1", "black", [] ], [ "g0:A", "mega:3", "green", [] ], [ "g0:C", "mega:GND.1", "black", [] ],
+    
+    [ "u1:VCC", "mega:5V", "red", [] ], [ "u1:GND", "mega:GND.1", "black", [] ], [ "u1:TRIG", "mega:24", "purple", [] ], [ "u1:ECHO", "mega:25", "orange", [] ],
+    [ "r1:A", "mega:4", "red", [] ], [ "r1:C", "mega:GND.1", "black", [] ], [ "g1:A", "mega:5", "green", [] ], [ "g1:C", "mega:GND.1", "black", [] ],
+    
+    [ "u2:VCC", "mega:5V", "red", [] ], [ "u2:GND", "mega:GND.1", "black", [] ], [ "u2:TRIG", "mega:26", "purple", [] ], [ "u2:ECHO", "mega:27", "orange", [] ],
+    [ "r2:A", "mega:6", "red", [] ], [ "r2:C", "mega:GND.1", "black", [] ], [ "g2:A", "mega:7", "green", [] ], [ "g2:C", "mega:GND.1", "black", [] ],
+    
+    [ "u3:VCC", "mega:5V", "red", [] ], [ "u3:GND", "mega:GND.1", "black", [] ], [ "u3:TRIG", "mega:28", "purple", [] ], [ "u3:ECHO", "mega:29", "orange", [] ],
+    [ "r3:A", "mega:8", "red", [] ], [ "r3:C", "mega:GND.1", "black", [] ], [ "g3:A", "mega:9", "green", [] ], [ "g3:C", "mega:GND.1", "black", [] ],
+    
+    [ "u4:VCC", "mega:5V", "red", [] ], [ "u4:GND", "mega:GND.1", "black", [] ], [ "u4:TRIG", "mega:30", "purple", [] ], [ "u4:ECHO", "mega:31", "orange", [] ],
+    [ "r4:A", "mega:10", "red", [] ], [ "r4:C", "mega:GND.1", "black", [] ], [ "g4:A", "mega:11", "green", [] ], [ "g4:C", "mega:GND.1", "black", [] ],
+    
+    [ "u5:VCC", "mega:5V", "red", [] ], [ "u5:GND", "mega:GND.1", "black", [] ], [ "u5:TRIG", "mega:32", "purple", [] ], [ "u5:ECHO", "mega:33", "orange", [] ],
+    [ "r5:A", "mega:12", "red", [] ], [ "r5:C", "mega:GND.1", "black", [] ], [ "g5:A", "mega:13", "green", [] ], [ "g5:C", "mega:GND.1", "black", [] ],
+    
+    [ "u6:VCC", "mega:5V", "red", [] ], [ "u6:GND", "mega:GND.1", "black", [] ], [ "u6:TRIG", "mega:34", "purple", [] ], [ "u6:ECHO", "mega:35", "orange", [] ],
+    [ "r6:A", "mega:14", "red", [] ], [ "r6:C", "mega:GND.1", "black", [] ], [ "g6:A", "mega:15", "green", [] ], [ "g6:C", "mega:GND.1", "black", [] ],
+    
+    [ "u7:VCC", "mega:5V", "red", [] ], [ "u7:GND", "mega:GND.1", "black", [] ], [ "u7:TRIG", "mega:36", "purple", [] ], [ "u7:ECHO", "mega:37", "orange", [] ],
+    [ "r7:A", "mega:16", "red", [] ], [ "r7:C", "mega:GND.1", "black", [] ], [ "g7:A", "mega:17", "green", [] ], [ "g7:C", "mega:GND.1", "black", [] ],
+    
+    [ "u8:VCC", "mega:5V", "red", [] ], [ "u8:GND", "mega:GND.1", "black", [] ], [ "u8:TRIG", "mega:38", "purple", [] ], [ "u8:ECHO", "mega:39", "orange", [] ],
+    [ "r8:A", "mega:18", "red", [] ], [ "r8:C", "mega:GND.1", "black", [] ], [ "g8:A", "mega:19", "green", [] ], [ "g8:C", "mega:GND.1", "black", [] ],
+    
+    [ "u9:VCC", "mega:5V", "red", [] ], [ "u9:GND", "mega:GND.1", "black", [] ], [ "u9:TRIG", "mega:40", "purple", [] ], [ "u9:ECHO", "mega:41", "orange", [] ],
+    [ "r9:A", "mega:42", "red", [] ], [ "r9:C", "mega:GND.1", "black", [] ], [ "g9:A", "mega:43", "green", [] ], [ "g9:C", "mega:GND.1", "black", [] ]
+  ],
+  "dependencies": {}
+}
