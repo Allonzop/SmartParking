@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Parking Live Dashboard</title>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        :root { --bg: #1e1e2f; --card: #27293d; --text: #e1e1e6; --green: #00f2c3; --red: #fd5d93; --accent: #344675; }
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 2rem; display: flex; flex-direction: column; align-items: center; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; width: 100%; max-width: 1000px; }
+        .panel { background: var(--card); padding: 2rem; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+        h2 { border-bottom: 1px solid var(--accent); padding-bottom: 0.8rem; color: #fff; }
+        .status { padding: 10px; border-radius: 5px; background: #333; text-align: center; margin-bottom: 20px; font-weight: bold; }
+        .spots { display: flex; gap: 1rem; justify-content: space-between; }
+        .spot { flex: 1; aspect-ratio: 4/5; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 600; background: #444; color: white; transition: all 0.4s ease; }
+        .spot.LIB { background: var(--green); color: #111; box-shadow: 0 0 15px rgba(0, 242, 195, 0.2); }
+        .spot.OCC { background: var(--red); color: white; box-shadow: 0 0 15px rgba(253, 93, 147, 0.2); }
+        pre { background: #111; color: var(--green); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>📡 Live IoT Dashboard</h1>
+    <div class="dashboard">
+        <div class="panel">
+            <h2>État du Parking (Temps Réel)</h2>
+            <div id="connection-status" class="status" style="color: orange;">Connexion au serveur...</div>
+            <div class="spots">
+                <div class="spot" id="ui-spot-1">P1</div>
+                <div class="spot" id="ui-spot-2">P2</div>
+                <div class="spot" id="ui-spot-3">P3</div>
+            </div>
+        </div>
+        <div class="panel">
+            <h2>Dernière trame reçue de l'ESP32</h2>
+            <pre id="json-output">En attente de Wokwi...</pre>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        // Doit être le MÊME topic que dans l'Arduino !
+        const TOPIC = "mon_super_parking/A1/etat"; 
+        
+        // Connexion au broker HiveMQ (via WebSocket pour le web)
+        const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+        const statusDiv = document.getElementById('connection-status');
+
+        client.on('connect', function () {
+            statusDiv.innerText = "Connecté au Cloud ✅";
+            statusDiv.style.color = "var(--green)";
+            client.subscribe(TOPIC); // On écoute le topic
+        });
+
+        // Quand un message arrive de l'ESP32
+        client.on('message', function (topic, message) {
+            const data = JSON.parse(message.toString());
+            
+            // Mise à jour de la boîte de texte
+            document.getElementById('json-output').innerText = JSON.stringify(data, null, 2);
+
+            // Mise à jour visuelle des places
+            data.places.forEach(place => {
+                const spotEl = document.getElementById(`ui-spot-${place.id}`);
+                spotEl.className = `spot ${place.statut}`;
+                spotEl.innerHTML = `P${place.id}<br><span style="font-size:0.8rem">${place.statut === 'OCC' ? 'Occupée' : 'Libre'}</span>`;
+            });
+        });
+    </script>
+</body>
+</html>
