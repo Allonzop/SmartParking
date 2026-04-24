@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "author": "SmartCity",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-lcd2004", "id": "lcd", "top": -200, "left": 50, "attrs": { "pins": "i2c" } },
+    { "type": "wokwi-pushbutton", "id": "btn", "top": 50, "left": -180, "attrs": { "color": "blue", "label": "BARRIERE" } },
+    
+    { "type": "wokwi-hc-sr04", "id": "u1", "top": 200, "left": -200, "attrs": {} },
+    { "type": "wokwi-hc-sr04", "id": "u2", "top": 200, "left": 50, "attrs": {} },
+    { "type": "wokwi-hc-sr04", "id": "u3", "top": 200, "left": 300, "attrs": {} },
+    { "type": "wokwi-hc-sr04", "id": "u4", "top": 200, "left": 550, "attrs": {} },
+    
+    { "type": "wokwi-led", "id": "r1", "top": 150, "left": -180, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g1", "top": 150, "left": -150, "attrs": { "color": "green" } },
+    
+    { "type": "wokwi-led", "id": "r2", "top": 150, "left": 70, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g2", "top": 150, "left": 100, "attrs": { "color": "green" } },
+    
+    { "type": "wokwi-led", "id": "r3", "top": 150, "left": 320, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g3", "top": 150, "left": 350, "attrs": { "color": "green" } },
+    
+    { "type": "wokwi-led", "id": "r4", "top": 150, "left": 570, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "g4", "top": 150, "left": 600, "attrs": { "color": "green" } }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    
+    [ "lcd:GND", "esp:GND", "black", [] ],
+    [ "lcd:VCC", "esp:VIN", "red", [] ],
+    [ "lcd:SDA", "esp:D21", "green", [] ],
+    [ "lcd:SCL", "esp:D22", "yellow", [] ],
+    
+    [ "btn:1.l", "esp:GND", "black", [] ],
+    [ "btn:2.r", "esp:D12", "blue", [] ],
+    
+    [ "u1:GND", "esp:GND", "black", [] ], [ "u1:VCC", "esp:VIN", "red", [] ],
+    [ "u1:TRIG", "esp:D5", "purple", [] ], [ "u1:ECHO", "esp:D34", "orange", [] ],
+    [ "r1:C", "esp:GND", "black", [] ], [ "r1:A", "esp:D13", "red", [] ],
+    [ "g1:C", "esp:GND", "black", [] ], [ "g1:A", "esp:D14", "green", [] ],
+    
+    [ "u2:GND", "esp:GND", "black", [] ], [ "u2:VCC", "esp:VIN", "red", [] ],
+    [ "u2:TRIG", "esp:D18", "purple", [] ], [ "u2:ECHO", "esp:D35", "orange", [] ],
+    [ "r2:C", "esp:GND", "black", [] ], [ "r2:A", "esp:D27", "red", [] ],
+    [ "g2:C", "esp:GND", "black", [] ], [ "g2:A", "esp:D26", "green", [] ],
+    
+    [ "u3:GND", "esp:GND", "black", [] ], [ "u3:VCC", "esp:VIN", "red", [] ],
+    [ "u3:TRIG", "esp:D19", "purple", [] ], [ "u3:ECHO", "esp:D32", "orange", [] ],
+    [ "r3:C", "esp:GND", "black", [] ], [ "r3:A", "esp:D25", "red", [] ],
+    [ "g3:C", "esp:GND", "black", [] ], [ "g3:A", "esp:D33", "green", [] ],
+    
+    [ "u4:GND", "esp:GND", "black", [] ], [ "u4:VCC", "esp:VIN", "red", [] ],
+    [ "u4:TRIG", "esp:D23", "purple", [] ], [ "u4:ECHO", "esp:D15", "orange", [] ],
+    [ "r4:C", "esp:GND", "black", [] ], [ "r4:A", "esp:D2", "red", [] ],
+    [ "g4:C", "esp:GND", "black", [] ], [ "g4:A", "esp:D4", "green", [] ]
+  ]
+}
