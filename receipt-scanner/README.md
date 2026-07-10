@@ -5,10 +5,15 @@ ranger dans **Google Drive** et remplir automatiquement un **Google Sheet**.
 
 Pour chaque ticket :
 
-1. **Scan noir & blanc rogné automatiquement** — depuis une photo (appareil photo
-   du téléphone) ou un PDF.
-2. **Envoi du scan dans ton Google Drive.**
-3. **Ajout d'une ligne dans un Google Sheet** avec les propriétés lues sur le
+1. **Lecture (OCR) sur la photo originale** — depuis une photo (appareil photo du
+   téléphone) ou un PDF. L'OCR tourne sur l'image d'origine (meilleure qualité de
+   lecture), *avant* tout traitement.
+2. **Rognage ajustable à 4 coins** — les coins du ticket sont pré-placés
+   automatiquement, tu les corriges au doigt si besoin (fiable, contrairement au
+   rognage auto). Puis rendu **scan couleur** propre (fond aplati/blanchi, netteté
+   préservée — pas de noir & blanc destructeur).
+3. **Envoi du scan dans ton Google Drive.**
+4. **Ajout d'une ligne dans un Google Sheet** avec les propriétés lues sur le
    ticket (marchand, date, total, TVA, catégorie…) **et le lien vers le scan**.
 
 100 % gratuit, **aucune clé API**, aucun serveur à héberger.
@@ -19,14 +24,23 @@ Pour chaque ticket :
 
 | Étape | Techno | Où ça tourne |
 |------|--------|--------------|
-| Rognage auto + noir & blanc | **OpenCV.js** (repli JS pur si indispo) | Dans ton navigateur |
-| Lecture du ticket (OCR français) | **Tesseract.js** | Dans ton navigateur |
+| Lecture du ticket (OCR français) sur l'original | **Tesseract.js** | Dans ton navigateur |
+| Rognage à 4 coins + rendu scan couleur | **OpenCV.js** (repli JS pur si indispo) | Dans ton navigateur |
 | Lecture des PDF | **pdf.js** | Dans ton navigateur |
 | Stockage Drive + écriture Sheet | **Google Apps Script** | Hébergé par Google (gratuit) |
 
 Le traitement de l'image et l'OCR se font **entièrement dans le navigateur** :
 tes tickets ne transitent par aucun service tiers. Seuls le scan final et les
 champs partent vers **ton** Drive / Sheet via Apps Script.
+
+L'ordre est important : **l'OCR passe d'abord sur la photo d'origine** (nette),
+puis on rogne et on applique le rendu scan uniquement pour l'image stockée. La
+lecture ne dépend donc plus de la qualité du rognage.
+
+**Options de rendu** (menu déroulant dans l'app) :
+- **Couleur (scan)** — recommandé : fond blanchi, couleurs et netteté conservées.
+- **Noir & blanc doux** — rendu document, sans binarisation agressive.
+- **Photo brute** — la photo rognée sans traitement.
 
 > ⚠️ L'OCR gratuit se trompe parfois (tickets froissés, mal cadrés…). **Tous les
 > champs sont modifiables** avant l'envoi : tu corriges en 2 secondes.
@@ -74,7 +88,8 @@ clasp deploy
 1. Ouvre l'**URL de l'application web** sur ton téléphone.
    *Astuce : « Ajouter à l'écran d'accueil » pour l'avoir comme une appli.*
 2. **Prendre une photo** (ouvre l'appareil photo) ou **Photo / PDF existant**.
-3. L'app génère le **scan noir & blanc rogné**, puis lit le ticket.
+3. La lecture (OCR) démarre sur la photo ; en même temps, **ajuste les 4 coins**
+   du rognage puis **Appliquer le rognage**.
 4. Vérifie / corrige les **propriétés** (marchand, date, total, catégorie…).
 5. **Envoyer vers Drive + Sheet** → tu obtiens les liens du scan et du tableau.
 
