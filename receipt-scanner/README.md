@@ -1,22 +1,20 @@
 # 🧾 Scanner de tickets de caisse
 
-Petite application web perso pour **scanner tes tickets de caisse / factures**, les
-ranger dans **Google Drive** et remplir automatiquement un **Google Sheet**.
+Application web perso pour **scanner tes tickets de caisse / factures**, les ranger
+dans **Google Drive** et remplir automatiquement un **Google Sheet**.
 
 Pour chaque ticket :
 
-1. **Lecture (OCR) sur la photo originale** — depuis une photo (appareil photo du
-   téléphone) ou un PDF. L'OCR tourne sur l'image d'origine (meilleure qualité de
-   lecture), *avant* tout traitement.
-2. **Rognage ajustable à 4 coins** — les coins du ticket sont pré-placés
-   automatiquement, tu les corriges au doigt si besoin (fiable, contrairement au
-   rognage auto). Puis rendu **scan couleur** propre (fond aplati/blanchi, netteté
-   préservée — pas de noir & blanc destructeur).
-3. **Envoi du scan dans ton Google Drive.**
-4. **Ajout d'une ligne dans un Google Sheet** avec les propriétés lues sur le
-   ticket (marchand, date, total, TVA, catégorie…) **et le lien vers le scan**.
-
-100 % gratuit, **aucune clé API**, aucun serveur à héberger.
+1. **Lecture par l'IA (Claude)** — tu prends une photo (ou un PDF). Claude lit
+   directement la photo couleur et extrait les informations (marchand, date,
+   total, TVA, catégorie, n° ticket).
+2. **Rognage automatique** — Claude détecte aussi les **4 coins du ticket** ; le
+   scan est rogné tout seul, au bon endroit. Tu peux réajuster à la main si besoin
+   (poignées) — mais en général ce n'est pas nécessaire.
+3. **Rendu scan couleur** — fond aplati/blanchi, couleurs et netteté préservées
+   (pas de noir & blanc destructeur).
+4. **Envoi dans Google Drive** + **ajout d'une ligne dans un Google Sheet** avec
+   les propriétés **et le lien vers le scan**.
 
 ---
 
@@ -24,26 +22,30 @@ Pour chaque ticket :
 
 | Étape | Techno | Où ça tourne |
 |------|--------|--------------|
-| Lecture du ticket (OCR français) sur l'original | **Tesseract.js** | Dans ton navigateur |
-| Rognage à 4 coins + rendu scan couleur | **OpenCV.js** (repli JS pur si indispo) | Dans ton navigateur |
+| Lecture du ticket + détection des coins | **Claude (API)** | Appelé côté serveur par Apps Script |
+| Rognage (perspective) + rendu scan couleur | **OpenCV.js** (repli JS si indispo) | Dans ton navigateur |
 | Lecture des PDF | **pdf.js** | Dans ton navigateur |
 | Stockage Drive + écriture Sheet | **Google Apps Script** | Hébergé par Google (gratuit) |
 
-Le traitement de l'image et l'OCR se font **entièrement dans le navigateur** :
-tes tickets ne transitent par aucun service tiers. Seuls le scan final et les
-champs partent vers **ton** Drive / Sheet via Apps Script.
+La clé API Claude est stockée **côté serveur (Apps Script)** et n'est **jamais
+exposée dans le navigateur** : la photo est envoyée à Apps Script, qui appelle
+Claude avec la clé secrète, puis renvoie les résultats.
 
-L'ordre est important : **l'OCR passe d'abord sur la photo d'origine** (nette),
-puis on rogne et on applique le rendu scan uniquement pour l'image stockée. La
-lecture ne dépend donc plus de la qualité du rognage.
+---
 
-**Options de rendu** (menu déroulant dans l'app) :
-- **Couleur (scan)** — recommandé : fond blanchi, couleurs et netteté conservées.
-- **Noir & blanc doux** — rendu document, sans binarisation agressive.
-- **Photo brute** — la photo rognée sans traitement.
+## 🔑 Obtenir une clé API Claude (indispensable)
 
-> ⚠️ L'OCR gratuit se trompe parfois (tickets froissés, mal cadrés…). **Tous les
-> champs sont modifiables** avant l'envoi : tu corriges en 2 secondes.
+> ⚠️ Je ne peux pas fournir de clé : tu dois créer **la tienne** (2 minutes).
+
+1. Va sur **[console.anthropic.com](https://console.anthropic.com)** → crée un compte.
+2. **Billing** → ajoute un petit crédit (quelques euros suffisent pour des
+   centaines de tickets).
+3. **API keys** → **Create Key** → copie la clé (commence par `sk-ant-...`).
+
+**Coût indicatif :** avec le modèle par défaut `claude-opus-4-8`, compter ≈ 1 à
+2 centimes par ticket. Pour réduire, tu peux utiliser un modèle moins cher : ajoute
+la propriété de script `ANTHROPIC_MODEL` = `claude-haiku-4-5` (beaucoup moins cher,
+un peu moins fin) ou `claude-sonnet-5`.
 
 ---
 
@@ -52,63 +54,64 @@ lecture ne dépend donc plus de la qualité du rognage.
 ### Méthode A — Copier-coller dans Apps Script (la plus simple)
 
 1. Va sur **[script.google.com](https://script.google.com)** → **Nouveau projet**.
-2. Renomme le projet (ex. « Scanner tickets »).
-3. **Fichier `Code.gs`** : remplace tout le contenu par celui de
-   [`apps-script/Code.gs`](apps-script/Code.gs).
-4. **Ajoute un fichier HTML** : clique `+` → **HTML**, nomme-le **`Index`**
-   (exactement, sans extension), puis colle le contenu de
+2. **`Code.gs`** : remplace tout par le contenu de [`apps-script/Code.gs`](apps-script/Code.gs).
+3. **Ajoute un fichier HTML** nommé exactement **`Index`** (`+` → HTML) et colle
    [`apps-script/Index.html`](apps-script/Index.html).
-5. *(Optionnel mais conseillé)* Active le manifeste : ⚙️ **Paramètres du projet**
-   → coche **« Afficher le fichier manifeste `appsscript.json` »**, puis colle le
-   contenu de [`apps-script/appsscript.json`](apps-script/appsscript.json).
-6. **Déploie** : bouton **Déployer** → **Nouveau déploiement** → type
-   **Application Web**.
+4. ⚙️ **Paramètres du projet** → coche **« Afficher `appsscript.json` »** et colle
+   [`apps-script/appsscript.json`](apps-script/appsscript.json)
+   (il ajoute le droit d'appeler l'API Claude).
+5. ⚙️ **Paramètres du projet** → **Propriétés du script** → **Ajouter** :
+   - `ANTHROPIC_API_KEY` = ta clé `sk-ant-...`
+   - *(optionnel)* `ANTHROPIC_MODEL` = `claude-haiku-4-5` pour réduire le coût
+6. **Déployer** → **Nouveau déploiement** → **Application Web**
    - *Exécuter en tant que* : **Moi**
-   - *Qui a accès* : **Seul moi-même** (usage perso privé)
-   - Clique **Déployer** et **autorise** les accès demandés (Drive + Sheets).
-7. Copie l'**URL de l'application web** proposée : c'est le lien de ton scanner.
+   - *Qui a accès* : **Seul moi-même**
+   - **Déployer**, puis **autorise** les accès (Drive, Sheets, requêtes externes).
+7. Copie l'**URL de l'application web** : c'est ton scanner.
 
-### Méthode B — Avec `clasp` (ligne de commande)
+### Méthode B — Avec `clasp`
 
 ```bash
 npm install -g @google/clasp
 clasp login
-cd receipt-scanner/apps-script
+cd apps-script
 clasp create --type webapp --title "Scanner tickets"
 clasp push
-clasp deploy
+# puis, dans l'éditeur Apps Script : ajoute ANTHROPIC_API_KEY dans les
+# Propriétés du script, et déploie en Application Web.
 ```
-
-(Un exemple de `.clasp.json` est fourni : [`apps-script/.clasp.json.example`](apps-script/.clasp.json.example).)
 
 ---
 
 ## 📱 Utilisation
 
-1. Ouvre l'**URL de l'application web** sur ton téléphone.
-   *Astuce : « Ajouter à l'écran d'accueil » pour l'avoir comme une appli.*
-2. **Prendre une photo** (ouvre l'appareil photo) ou **Photo / PDF existant**.
-3. La lecture (OCR) démarre sur la photo ; en même temps, **ajuste les 4 coins**
-   du rognage puis **Appliquer le rognage**.
-4. Vérifie / corrige les **propriétés** (marchand, date, total, catégorie…).
-5. **Envoyer vers Drive + Sheet** → tu obtiens les liens du scan et du tableau.
+1. Ouvre l'**URL** sur ton téléphone. *(« Ajouter à l'écran d'accueil » pour l'avoir comme une appli.)*
+2. **Prendre une photo** ou **Photo / PDF existant**.
+3. L'IA lit le ticket **et le rogne automatiquement** → le scan s'affiche.
+   *Besoin de corriger le cadrage ? → « Réajuster le rognage » (glisse les coins).*
+4. Vérifie / corrige les **propriétés** (tout est modifiable).
+5. **Envoyer vers Drive + Sheet** → liens du scan et du tableau.
 
-Le dossier Drive **« Tickets scannés »** et le tableau **« Tickets de caisse »**
-sont **créés automatiquement** à la première utilisation.
+Le dossier **« Tickets scannés »** et le tableau **« Tickets de caisse »** sont
+créés automatiquement à la première utilisation.
 
 ---
 
-## 🎛️ Options
+## 🎛️ Options (Propriétés du script)
 
-- **Cibler un dossier / un tableau existants** : dans Apps Script →
-  ⚙️ **Paramètres du projet** → **Propriétés du script**, ajoute :
-  - `FOLDER_ID` = l'ID du dossier Drive (dans son URL après `folders/`)
-  - `SHEET_ID` = l'ID du Google Sheet (dans son URL après `/d/`)
-- **Rendre les scans accessibles par lien** (par défaut ils restent privés) :
-  dé-commente la ligne `setSharing(...)` dans `Code.gs`.
+| Propriété | Rôle |
+|-----------|------|
+| `ANTHROPIC_API_KEY` | **Obligatoire.** Ta clé API Claude. |
+| `ANTHROPIC_MODEL` | Modèle utilisé (défaut `claude-opus-4-8`). Ex. `claude-haiku-4-5` pour le coût. |
+| `FOLDER_ID` | Cibler un dossier Drive existant (ID dans son URL après `folders/`). |
+| `SHEET_ID` | Cibler un Google Sheet existant (ID dans son URL après `/d/`). |
+
+- **Rendu du scan** : menu déroulant dans l'app — **Couleur (scan)** /
+  **Noir & blanc doux** / **Photo brute**.
+- **Rendre les scans partageables par lien** (privés par défaut) : dé-commente la
+  ligne `setSharing(...)` dans `Code.gs`.
 - **Colonnes du tableau** : `Date d'ajout · Date ticket · Marchand · Catégorie ·
-  Total · Devise · TVA · N° ticket · Lien scan · Texte brut`. Modifie la constante
-  `ENTETES` (et la fonction `saveReceipt`) dans `Code.gs` pour les adapter.
+  Total · Devise · TVA · N° ticket · Lien scan`.
 
 ---
 
@@ -116,20 +119,8 @@ sont **créés automatiquement** à la première utilisation.
 
 | Problème | Solution |
 |----------|----------|
+| « Clé API Claude manquante » | Ajoute `ANTHROPIC_API_KEY` dans les Propriétés du script, puis redéploie. |
+| « Clé API refusée (401) » | Clé invalide/expirée, ou crédit épuisé (Billing). |
 | « google.script.run indisponible » | Ouvre l'app via l'**URL du web app**, pas en fichier local. |
-| Le rognage n'est pas parfait | Cadre le ticket sur un **fond contrasté**, ou décoche **Rognage auto**. |
-| OCR lent la 1re fois | Les bibliothèques (OpenCV/Tesseract) se téléchargent une fois puis sont mises en cache. |
-| Un champ est faux | Corrige-le dans le formulaire avant l'envoi. |
+| Le rognage auto est un peu décalé | « Réajuster le rognage » et glisse les coins (poignées agrandies). |
 | Après modif du code | Redéploie : **Déployer → Gérer les déploiements → ✏️ → Nouvelle version**. |
-
----
-
-## 💡 Envie de plus de précision plus tard ?
-
-L'OCR gratuit est correct mais imparfait. Pour une lecture beaucoup plus fiable
-sur des tickets très variés, on peut brancher l'extraction sur **Claude Vision**
-(l'IA lit le ticket et renvoie les champs en JSON). Ça nécessite une clé API
-Claude et un petit coût par ticket. L'architecture actuelle est prête pour cette
-évolution : il suffirait de remplacer `runOCR` + `parseReceipt` par un appel à
-Claude (côté Apps Script via `UrlFetchApp`, pour garder la clé secrète).
-Demande-le si tu veux passer à cette version.

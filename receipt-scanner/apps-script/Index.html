@@ -39,13 +39,13 @@
     .opts label{display:flex; align-items:center; gap:.5rem; cursor:pointer}
     .opts select{background:var(--card2); border:1px solid var(--line); color:var(--text); border-radius:8px; padding:7px 9px}
     .stage{display:none}
-    .canvas-wrap{position:relative; margin-top:6px; text-align:center; line-height:0}
+    .canvas-wrap{margin-top:6px; text-align:center; line-height:0}
     canvas{max-width:100%; border-radius:10px; border:1px solid var(--line); background:#0a0c16; touch-action:none}
     #scanCanvas{background:#fff}
     .hint{color:var(--muted); font-size:.82rem; margin-top:10px; line-height:1.4}
     .progress{display:none; margin-top:12px}
     .bar{height:8px; background:var(--card2); border-radius:6px; overflow:hidden}
-    .bar > i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .2s}
+    .bar > i{display:block; height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width .25s}
     .progress span{display:block; color:var(--muted); font-size:.82rem; margin-top:6px}
     .grid{display:grid; grid-template-columns:1fr 1fr; gap:12px}
     @media(max-width:520px){.grid{grid-template-columns:1fr}}
@@ -55,7 +55,6 @@
       background:var(--card2); border:1px solid var(--line); color:var(--text);
       border-radius:10px; padding:11px 12px; font-size:1rem; width:100%; font-family:inherit;
     }
-    .field textarea{resize:vertical; min-height:90px; font-size:.85rem; line-height:1.4}
     details{margin-top:12px; border:1px solid var(--line); border-radius:10px; padding:0 12px}
     details summary{cursor:pointer; padding:12px 0; color:var(--muted); font-size:.9rem}
     .badge{display:inline-block; font-size:.72rem; color:var(--muted); background:var(--card2); border:1px solid var(--line); border-radius:20px; padding:3px 9px; margin-left:6px}
@@ -71,7 +70,7 @@
 <body>
 
   <h1>🧾 Scanner de tickets</h1>
-  <p class="sub">Photo ou PDF → lecture (OCR) → rognage ajustable → scan couleur → Drive + Sheet</p>
+  <p class="sub">Photo ou PDF → lecture par l'IA (Claude) → rognage auto → Drive + Sheet</p>
 
   <!-- 1. Capture -->
   <div class="card">
@@ -88,12 +87,10 @@
     </div>
   </div>
 
-  <!-- 2. Rognage ajustable -->
+  <!-- 2. Rognage ajustable (caché par défaut : l'IA rogne toute seule) -->
   <div class="card stage" id="cropCard">
-    <h2>2 · Ajuster le rognage <span class="badge">glisse les 4 coins</span></h2>
-    <div class="canvas-wrap">
-      <canvas id="cropCanvas"></canvas>
-    </div>
+    <h2>Ajuster le rognage <span class="badge">glisse les 4 coins</span></h2>
+    <div class="canvas-wrap"><canvas id="cropCanvas"></canvas></div>
     <div class="opts">
       <label>Rendu&nbsp;:
         <select id="optRender">
@@ -102,9 +99,8 @@
           <option value="raw">Photo brute</option>
         </select>
       </label>
-      <button class="btn secondary small" id="btnReset">↺ Réinitialiser</button>
+      <button class="btn secondary small" id="btnReset">↺ Coins par défaut</button>
     </div>
-    <p class="hint">Place chaque coin sur un angle du ticket. Puis applique le rognage.</p>
     <div class="row" style="margin-top:6px">
       <button class="btn" id="btnApply">✂️ Appliquer le rognage</button>
     </div>
@@ -112,14 +108,17 @@
 
   <!-- 3. Scan généré -->
   <div class="card stage" id="scanCard">
-    <h2>3 · Scan généré</h2>
+    <h2>Scan généré</h2>
     <div class="canvas-wrap"><canvas id="scanCanvas"></canvas></div>
-    <p class="hint" id="scanHint">Aperçu du scan qui sera enregistré dans Drive.</p>
+    <div class="row" style="margin-top:12px">
+      <button class="btn secondary small" id="btnReadjust">✏️ Réajuster le rognage</button>
+    </div>
+    <p class="hint">Aperçu du scan qui sera enregistré dans Drive. L'IA a rogné automatiquement ; réajuste seulement si besoin.</p>
   </div>
 
   <!-- 4. Propriétés -->
   <div class="card stage" id="fieldsCard">
-    <h2>4 · Propriétés du ticket <span style="text-transform:none;color:var(--muted)">(modifiables)</span> <span class="badge" id="ocrBadge">OCR…</span></h2>
+    <h2>Propriétés du ticket <span style="text-transform:none;color:var(--muted)">(modifiables)</span></h2>
     <div class="grid">
       <div class="field"><label for="fMerchant">Marchand</label><input id="fMerchant" type="text" placeholder="Ex. Carrefour"></div>
       <div class="field"><label for="fDate">Date du ticket</label><input id="fDate" type="text" placeholder="JJ/MM/AAAA"></div>
@@ -138,25 +137,20 @@
       <div class="field"><label for="fTva">TVA</label><input id="fTva" type="text" placeholder="Ex. 4,15"></div>
       <div class="field"><label for="fTicket">N° ticket</label><input id="fTicket" type="text" placeholder="Optionnel"></div>
     </div>
-    <details>
-      <summary>Voir / corriger le texte OCR brut</summary>
-      <div class="field" style="margin-bottom:12px"><textarea id="fRaw" placeholder="Texte reconnu…"></textarea></div>
-    </details>
     <div class="row" style="margin-top:14px">
       <button class="btn success" id="btnSend" disabled>☁️ Envoyer vers Drive + Sheet</button>
     </div>
     <div class="status" id="status"></div>
   </div>
 
-  <p class="foot">100 % gratuit · OCR dans le navigateur (Tesseract.js) · Rognage & scan OpenCV.js</p>
+  <p class="foot">Lecture & rognage par l'IA (Claude) · Rendu scan OpenCV.js · Stockage Google Apps Script</p>
 
   <script>
   /* =======================================================================
-     Bibliothèques externes (CDN), chargées à la demande
+     Bibliothèques externes (CDN)
      ======================================================================= */
   var CDN = {
     opencv:    'https://docs.opencv.org/4.10.0/opencv.js',
-    tesseract: 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',
     pdfjs:     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',
     pdfWorker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
   };
@@ -164,10 +158,8 @@
   function loadScript(src){
     if (loaded[src]) return loaded[src];
     loaded[src] = new Promise(function(resolve, reject){
-      var s = document.createElement('script');
-      s.src = src; s.async = true;
-      s.onload = resolve;
-      s.onerror = function(){ reject(new Error('Échec du chargement : ' + src)); };
+      var s=document.createElement('script'); s.src=src; s.async=true;
+      s.onload=resolve; s.onerror=function(){ reject(new Error('Échec du chargement : '+src)); };
       document.head.appendChild(s);
     });
     return loaded[src];
@@ -176,28 +168,36 @@
     if (window.__cvReady) return Promise.resolve();
     if (window.__cvLoading) return window.__cvLoading;
     window.__cvLoading = new Promise(function(resolve, reject){
-      var done = false;
-      var to = setTimeout(function(){ if(!done){done=true;reject(new Error('OpenCV : délai dépassé'));} }, 30000);
-      window.Module = { onRuntimeInitialized: function(){ if(!done){done=true;clearTimeout(to);window.__cvReady=true;resolve();} } };
+      var done=false;
+      var to=setTimeout(function(){ if(!done){done=true;reject(new Error('OpenCV : délai dépassé'));} }, 30000);
+      window.Module={ onRuntimeInitialized:function(){ if(!done){done=true;clearTimeout(to);window.__cvReady=true;resolve();} } };
       loadScript(CDN.opencv).catch(function(e){ if(!done){done=true;clearTimeout(to);reject(e);} });
     });
     return window.__cvLoading;
   }
 
   /* =======================================================================
-     État + helpers UI
+     État + helpers
      ======================================================================= */
   var $ = function(id){ return document.getElementById(id); };
   var state = { src:null, corners:null, scale:1, cropReady:false };
 
-  function setProgress(pct, label){
-    $('progWrap').style.display='block';
-    $('progBar').style.width=Math.max(0,Math.min(100,pct))+'%';
-    if(label) $('progLabel').textContent=label;
-  }
+  function setProgress(pct, label){ $('progWrap').style.display='block'; $('progBar').style.width=Math.max(0,Math.min(100,pct))+'%'; if(label)$('progLabel').textContent=label; }
   function hideProgress(){ $('progWrap').style.display='none'; }
   function showStatus(kind, html){ var el=$('status'); el.className='status '+kind; el.style.display='block'; el.innerHTML=html; }
   function show(id){ $(id).style.display='block'; }
+  function hide(id){ $(id).style.display='none'; }
+  function scrollTo(id){ $(id).scrollIntoView({behavior:'smooth', block:'start'}); }
+
+  // Wrapper Promise autour de google.script.run
+  function runServer(name, arg){
+    return new Promise(function(resolve, reject){
+      if(!(window.google && google.script && google.script.run)){
+        reject(new Error("google.script.run indisponible : ouvre l'app via l'URL du web app Apps Script.")); return;
+      }
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](arg);
+    });
+  }
 
   /* =======================================================================
      Entrées fichier
@@ -208,37 +208,42 @@
   $('inputFile').addEventListener('change', function(e){ if(e.target.files[0]) handleFile(e.target.files[0]); });
 
   /* =======================================================================
-     Pipeline : charger -> (OCR sur l'original EN PARALLÈLE) -> éditeur de rognage
+     Pipeline : charger -> analyse IA (lecture + coins) -> rognage auto
      ======================================================================= */
   async function handleFile(file){
     try{
-      $('status').style.display='none';
-      $('scanCard').style.display='none';
-      $('fieldsCard').style.display='none';
-      $('btnSend').disabled=true;
-      state.cropReady=false;
-      setProgress(8,'Lecture du fichier…');
+      hide('scanCard'); hide('cropCard'); hide('fieldsCard');
+      $('status').style.display='none'; $('btnSend').disabled=true; state.cropReady=false;
 
-      var srcCanvas;
-      if (file.type==='application/pdf' || /\.pdf$/i.test(file.name)) srcCanvas = await pdfToCanvas(file);
-      else srcCanvas = await imageToCanvas(file);
+      setProgress(10,'Lecture du fichier…');
+      var srcCanvas = (file.type==='application/pdf'||/\.pdf$/i.test(file.name)) ? await pdfToCanvas(file) : await imageToCanvas(file);
       state.src = srcCanvas;
 
-      // 1) OCR d'abord, sur l'image ORIGINALE (meilleure qualité de lecture),
-      //    lancé en parallèle de l'éditeur de rognage.
-      show('fieldsCard');
-      $('ocrBadge').textContent='OCR en cours…';
-      runOCRPipeline(srcCanvas); // async, ne bloque pas l'affichage du rognage
+      setProgress(35,'Analyse du ticket par l\'IA…');
+      var b64 = toJpegBase64(srcCanvas, 1600);
+      var res;
+      try{
+        res = await runServer('analyzeReceipt', { imageBase64:b64, mimeType:'image/jpeg' });
+      }catch(e){
+        // Échec IA -> repli : saisie/rognage manuels
+        show('fieldsCard'); show('cropCard');
+        state.corners = defaultCorners(srcCanvas); drawCrop(); initCropSize(srcCanvas); drawCrop();
+        hideProgress();
+        showStatus('err','❌ '+(e&&e.message?e.message:e)+'<br>Tu peux quand même rogner et saisir les champs à la main.');
+        return;
+      }
 
-      // 2) Éditeur de rognage (coins pré-placés automatiquement)
-      setProgress(30,'Préparation du rognage…');
-      await initCropEditor(srcCanvas);
-      show('cropCard');
-      $('cropCard').scrollIntoView({behavior:'smooth', block:'start'});
-      setProgress(100,'Prêt'); setTimeout(hideProgress,500);
-    }catch(err){
-      hideProgress();
+      fillForm(res.fields||{});
       show('fieldsCard');
+
+      setProgress(70,'Rognage automatique…');
+      state.corners = res.corners ? cornersFromFractions(res.corners, srcCanvas) : defaultCorners(srcCanvas);
+      initCropSize(srcCanvas);
+      await applyCrop();           // produit le scan à partir des coins de l'IA
+      show('scanCard'); scrollTo('scanCard');
+      setProgress(100,'Terminé'); setTimeout(hideProgress,500);
+    }catch(err){
+      hideProgress(); show('fieldsCard');
       showStatus('err','❌ '+(err&&err.message?err.message:err));
     }
   }
@@ -247,12 +252,9 @@
     return new Promise(function(resolve,reject){
       var img=new Image();
       img.onload=function(){
-        var max=2200; // on garde une bonne résolution pour l'OCR et le scan
-        var scale=Math.min(1, max/Math.max(img.width,img.height));
-        var c=document.createElement('canvas');
-        c.width=Math.round(img.width*scale); c.height=Math.round(img.height*scale);
-        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-        URL.revokeObjectURL(img.src); resolve(c);
+        var max=2200, scale=Math.min(1, max/Math.max(img.width,img.height));
+        var c=document.createElement('canvas'); c.width=Math.round(img.width*scale); c.height=Math.round(img.height*scale);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(img.src); resolve(c);
       };
       img.onerror=function(){ reject(new Error('Image illisible')); };
       img.src=URL.createObjectURL(file);
@@ -263,8 +265,7 @@
     window.pdfjsLib.GlobalWorkerOptions.workerSrc=CDN.pdfWorker;
     var buf=await file.arrayBuffer();
     var pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
-    var page=await pdf.getPage(1);
-    var vp=page.getViewport({scale:2});
+    var page=await pdf.getPage(1); var vp=page.getViewport({scale:2});
     var c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
     await page.render({canvasContext:c.getContext('2d'), viewport:vp}).promise;
     var max=2200;
@@ -275,91 +276,57 @@
     }
     return c;
   }
-
-  /* =======================================================================
-     OCR (Tesseract.js FR) sur l'image originale + extraction
-     ======================================================================= */
-  async function runOCRPipeline(srcCanvas){
-    try{
-      var text = await runOCR(makeOcrCanvas(srcCanvas));
-      var fields = parseReceipt(text);
-      fillForm(fields, text);
-      $('ocrBadge').textContent='OCR ok ✓';
-    }catch(e){
-      $('ocrBadge').textContent='OCR indispo — saisie manuelle';
-    }
-  }
-  // Prépare une image nette pour l'OCR : upscale léger + gris + contraste (sans binariser).
-  function makeOcrCanvas(srcCanvas){
-    var target=1700;
-    var scale=Math.min(2, Math.max(1, target/Math.max(srcCanvas.width,srcCanvas.height)));
-    var c=document.createElement('canvas');
-    c.width=Math.round(srcCanvas.width*scale); c.height=Math.round(srcCanvas.height*scale);
-    var ctx=c.getContext('2d');
-    try{ ctx.filter='grayscale(1) contrast(1.2) brightness(1.05)'; }catch(e){}
-    ctx.drawImage(srcCanvas,0,0,c.width,c.height);
-    return c;
-  }
-  async function runOCR(canvas){
-    await loadScript(CDN.tesseract);
-    var worker=await window.Tesseract.createWorker('fra',1,{ logger:function(m){
-      if(m.status==='recognizing text') $('ocrBadge').textContent='OCR '+Math.round(m.progress*100)+'%';
-    }});
-    try{
-      try{ await worker.setParameters({ tessedit_pageseg_mode:'6' }); }catch(e){}
-      var res=await worker.recognize(canvas);
-      return (res&&res.data&&res.data.text)?res.data.text:'';
-    } finally { try{ await worker.terminate(); }catch(e){} }
+  function toJpegBase64(srcCanvas, max){
+    var scale=Math.min(1, max/Math.max(srcCanvas.width,srcCanvas.height));
+    var c=srcCanvas;
+    if(scale<1){ c=document.createElement('canvas'); c.width=Math.round(srcCanvas.width*scale); c.height=Math.round(srcCanvas.height*scale); c.getContext('2d').drawImage(srcCanvas,0,0,c.width,c.height); }
+    return c.toDataURL('image/jpeg',0.85).split(',')[1];
   }
 
-  /* =======================================================================
-     Éditeur de rognage à 4 coins (tactile + souris)
-     ======================================================================= */
-  var cropCanvas=$('cropCanvas'), cropCtx=cropCanvas.getContext('2d');
-  var dragIdx=-1, HANDLE=11;
-
-  async function initCropEditor(srcCanvas){
-    // dimension d'affichage
-    var maxW=Math.min(srcCanvas.width, 680);
-    state.scale=maxW/srcCanvas.width;
-    cropCanvas.width=Math.round(srcCanvas.width*state.scale);
-    cropCanvas.height=Math.round(srcCanvas.height*state.scale);
-
-    // coins initiaux : détection auto (OpenCV) sinon marge par défaut
-    var auto=null;
-    try{ await loadOpenCV(); auto=autoDetectCorners(srcCanvas); }catch(e){ auto=null; }
-    state.corners = auto || defaultCorners(srcCanvas);
-    drawCrop();
+  function cornersFromFractions(c, sc){
+    function pt(p){ return { x:Math.max(0,Math.min(1,(p&&p.x)||0))*sc.width, y:Math.max(0,Math.min(1,(p&&p.y)||0))*sc.height }; }
+    var arr=[pt(c.tl),pt(c.tr),pt(c.br),pt(c.bl)];
+    // garde-fou : si l'IA renvoie un cadre minuscule/aberrant, on retombe sur défaut
+    var w=Math.hypot(arr[1].x-arr[0].x,arr[1].y-arr[0].y), h=Math.hypot(arr[3].x-arr[0].x,arr[3].y-arr[0].y);
+    if(w < sc.width*0.15 || h < sc.height*0.15) return defaultCorners(sc);
+    return arr;
   }
   function defaultCorners(sc){
-    var mx=sc.width*0.08, my=sc.height*0.06;
+    var mx=sc.width*0.05, my=sc.height*0.04;
     return [ {x:mx,y:my}, {x:sc.width-mx,y:my}, {x:sc.width-mx,y:sc.height-my}, {x:mx,y:sc.height-my} ];
   }
+
+  /* =======================================================================
+     Éditeur de rognage (poignées agrandies)
+     ======================================================================= */
+  var cropCanvas=$('cropCanvas'), cropCtx=cropCanvas.getContext('2d');
+  var dragIdx=-1, HANDLE=18;
+
+  function initCropSize(sc){
+    var maxW=Math.min(sc.width, 680);
+    state.scale=maxW/sc.width;
+    cropCanvas.width=Math.round(sc.width*state.scale);
+    cropCanvas.height=Math.round(sc.height*state.scale);
+  }
   function drawCrop(){
+    if(!state.src) return;
     var sc=state.src, k=state.scale;
     cropCtx.clearRect(0,0,cropCanvas.width,cropCanvas.height);
     cropCtx.drawImage(sc,0,0,cropCanvas.width,cropCanvas.height);
-    // assombrir l'extérieur
     cropCtx.save();
     cropCtx.fillStyle='rgba(10,12,22,.55)';
-    cropCtx.beginPath();
-    cropCtx.rect(0,0,cropCanvas.width,cropCanvas.height);
+    cropCtx.beginPath(); cropCtx.rect(0,0,cropCanvas.width,cropCanvas.height);
     cropCtx.moveTo(state.corners[0].x*k, state.corners[0].y*k);
     for(var i=1;i<4;i++) cropCtx.lineTo(state.corners[i].x*k, state.corners[i].y*k);
-    cropCtx.closePath();
-    cropCtx.fill('evenodd');
-    cropCtx.restore();
-    // polygone
-    cropCtx.strokeStyle='#00d3a7'; cropCtx.lineWidth=2;
-    cropCtx.beginPath();
-    cropCtx.moveTo(state.corners[0].x*k, state.corners[0].y*k);
+    cropCtx.closePath(); cropCtx.fill('evenodd'); cropCtx.restore();
+    cropCtx.strokeStyle='#00d3a7'; cropCtx.lineWidth=2.5;
+    cropCtx.beginPath(); cropCtx.moveTo(state.corners[0].x*k, state.corners[0].y*k);
     for(var j=1;j<4;j++) cropCtx.lineTo(state.corners[j].x*k, state.corners[j].y*k);
     cropCtx.closePath(); cropCtx.stroke();
-    // poignées
     for(var c=0;c<4;c++){
       var px=state.corners[c].x*k, py=state.corners[c].y*k;
-      cropCtx.beginPath(); cropCtx.arc(px,py,HANDLE,0,Math.PI*2);
-      cropCtx.fillStyle='#5b8cff'; cropCtx.fill();
+      cropCtx.beginPath(); cropCtx.arc(px,py,HANDLE+8,0,Math.PI*2); cropCtx.fillStyle='rgba(91,140,255,.25)'; cropCtx.fill();
+      cropCtx.beginPath(); cropCtx.arc(px,py,HANDLE,0,Math.PI*2); cropCtx.fillStyle='#5b8cff'; cropCtx.fill();
       cropCtx.lineWidth=3; cropCtx.strokeStyle='#fff'; cropCtx.stroke();
     }
   }
@@ -370,21 +337,13 @@
     return { x:cx*(cropCanvas.width/r.width), y:cy*(cropCanvas.height/r.height) };
   }
   function pickCorner(p){
-    var k=state.scale, best=-1, bd=HANDLE*2.4;
-    for(var i=0;i<4;i++){
-      var d=Math.hypot(state.corners[i].x*k-p.x, state.corners[i].y*k-p.y);
-      if(d<bd){ bd=d; best=i; }
-    }
+    var k=state.scale, best=-1, bd=(HANDLE+18)*1.6;
+    for(var i=0;i<4;i++){ var d=Math.hypot(state.corners[i].x*k-p.x, state.corners[i].y*k-p.y); if(d<bd){ bd=d; best=i; } }
     return best;
   }
-  function onDown(e){ e.preventDefault(); dragIdx=pickCorner(evtToCanvas(e)); }
-  function onMove(e){
-    if(dragIdx<0) return; e.preventDefault();
-    var p=evtToCanvas(e), k=state.scale;
-    var x=Math.max(0, Math.min(state.src.width,  p.x/k));
-    var y=Math.max(0, Math.min(state.src.height, p.y/k));
-    state.corners[dragIdx]={x:x,y:y}; drawCrop();
-  }
+  function onDown(e){ if(!state.src) return; e.preventDefault(); dragIdx=pickCorner(evtToCanvas(e)); }
+  function onMove(e){ if(dragIdx<0) return; e.preventDefault(); var p=evtToCanvas(e),k=state.scale;
+    state.corners[dragIdx]={ x:Math.max(0,Math.min(state.src.width,p.x/k)), y:Math.max(0,Math.min(state.src.height,p.y/k)) }; drawCrop(); }
   function onUp(){ dragIdx=-1; }
   cropCanvas.addEventListener('mousedown',onDown);
   window.addEventListener('mousemove',onMove);
@@ -392,114 +351,60 @@
   cropCanvas.addEventListener('touchstart',onDown,{passive:false});
   cropCanvas.addEventListener('touchmove',onMove,{passive:false});
   cropCanvas.addEventListener('touchend',onUp);
-  $('btnReset').addEventListener('click', function(){
-    var auto=null; try{ if(window.__cvReady) auto=autoDetectCorners(state.src); }catch(e){}
-    state.corners=auto||defaultCorners(state.src); drawCrop();
-  });
+  $('btnReset').addEventListener('click', function(){ state.corners=defaultCorners(state.src); drawCrop(); });
 
-  // Détection auto des 4 coins du ticket (OpenCV) — sert de pré-placement.
-  function autoDetectCorners(srcCanvas){
-    var cv=window.cv, src=cv.imread(srcCanvas);
-    try{
-      var ratio=900/Math.max(src.rows,src.cols);
-      var small=new cv.Mat();
-      cv.resize(src,small,new cv.Size(Math.round(src.cols*ratio),Math.round(src.rows*ratio)));
-      var gray=new cv.Mat(); cv.cvtColor(small,gray,cv.COLOR_RGBA2GRAY);
-      cv.GaussianBlur(gray,gray,new cv.Size(5,5),0);
-      var edges=new cv.Mat(); cv.Canny(gray,edges,50,150);
-      var k=cv.Mat.ones(5,5,cv.CV_8U); cv.dilate(edges,edges,k);
-      var contours=new cv.MatVector(), hier=new cv.Mat();
-      cv.findContours(edges,contours,hier,cv.RETR_LIST,cv.CHAIN_APPROX_SIMPLE);
-      var imgArea=small.rows*small.cols, corners=null, bestArea=0;
-      for(var i=0;i<contours.size();i++){
-        var cnt=contours.get(i), peri=cv.arcLength(cnt,true), approx=new cv.Mat();
-        cv.approxPolyDP(cnt,approx,0.02*peri,true);
-        var area=Math.abs(cv.contourArea(approx));
-        if(approx.rows===4 && area>bestArea && area>imgArea*0.18){
-          bestArea=area;
-          var pts=[]; for(var j=0;j<4;j++) pts.push({x:approx.data32S[j*2]/ratio, y:approx.data32S[j*2+1]/ratio});
-          corners=orderCorners(pts);
-        }
-        approx.delete(); cnt.delete();
-      }
-      small.delete();gray.delete();edges.delete();k.delete();contours.delete();hier.delete();
-      return corners;
-    } catch(e){ return null; }
-    finally { src.delete(); }
-  }
-  function orderCorners(p){
-    var s=p.slice().sort(function(a,b){return (a.x+a.y)-(b.x+b.y);});
-    var d=p.slice().sort(function(a,b){return (a.y-a.x)-(b.y-b.x);});
-    return [ s[0], d[0], s[3], d[3] ]; // tl, tr, br, bl
-  }
+  $('btnReadjust').addEventListener('click', function(){ show('cropCard'); drawCrop(); scrollTo('cropCard'); });
+  $('btnApply').addEventListener('click', async function(){
+    try{ setProgress(30,'Rognage & rendu…'); await applyCrop(); hide('cropCard'); show('scanCard'); scrollTo('scanCard'); setProgress(100,'Terminé'); setTimeout(hideProgress,400); }
+    catch(err){ hideProgress(); showStatus('err','❌ '+(err&&err.message?err.message:err)); }
+  });
 
   /* =======================================================================
-     Appliquer le rognage : perspective + rendu scan
+     Rognage (perspective) + rendu scan
      ======================================================================= */
-  $('btnApply').addEventListener('click', async function(){
-    try{
-      setProgress(20,'Rognage & rendu…');
-      var mode=$('optRender').value;
-      var ok=false;
-      try{ await loadOpenCV(); warpAndRender(state.src, state.corners, mode); ok=true; }
-      catch(e){ ok=false; }
-      if(!ok) fallbackRender(state.src, state.corners, mode);
-
-      state.cropReady=true;
-      show('scanCard'); $('btnSend').disabled=false;
-      $('scanCard').scrollIntoView({behavior:'smooth', block:'start'});
-      setProgress(100,'Terminé'); setTimeout(hideProgress,400);
-    }catch(err){ hideProgress(); showStatus('err','❌ '+(err&&err.message?err.message:err)); }
-  });
-
+  async function applyCrop(){
+    var mode=$('optRender').value, ok=false;
+    try{ await loadOpenCV(); warpAndRender(state.src, state.corners, mode); ok=true; }catch(e){ ok=false; }
+    if(!ok) fallbackRender(state.src, state.corners, mode);
+    state.cropReady=true; $('btnSend').disabled=false;
+  }
   function warpAndRender(srcCanvas, corners, mode){
     var cv=window.cv, src=cv.imread(srcCanvas);
     var c=corners, dist=function(a,b){return Math.hypot(a.x-b.x,a.y-b.y);};
-    var w=Math.round(Math.max(dist(c[1],c[0]),dist(c[2],c[3])));
-    var h=Math.round(Math.max(dist(c[3],c[0]),dist(c[2],c[1])));
-    w=Math.max(40,w); h=Math.max(40,h);
+    var w=Math.max(40,Math.round(Math.max(dist(c[1],c[0]),dist(c[2],c[3]))));
+    var h=Math.max(40,Math.round(Math.max(dist(c[3],c[0]),dist(c[2],c[1]))));
     var srcTri=cv.matFromArray(4,1,cv.CV_32FC2,[c[0].x,c[0].y,c[1].x,c[1].y,c[2].x,c[2].y,c[3].x,c[3].y]);
     var dstTri=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,w,0,w,h,0,h]);
     var M=cv.getPerspectiveTransform(srcTri,dstTri);
     var warped=new cv.Mat(); cv.warpPerspective(src,warped,M,new cv.Size(w,h));
-    var out=(mode==='raw') ? warped.clone() : enhanceScan(warped, mode==='bw');
+    var out=(mode==='raw')?warped.clone():enhanceScan(warped, mode==='bw');
     cv.imshow($('scanCanvas'), out);
     src.delete();srcTri.delete();dstTri.delete();M.delete();warped.delete();out.delete();
   }
-
-  // Rendu "scan" : aplatissement de l'éclairage (fond blanchi) en préservant
-  // la couleur et la netteté. Pas de binarisation -> qualité conservée.
   function enhanceScan(rgba, toGray){
     var cv=window.cv;
     var rgb=new cv.Mat(); cv.cvtColor(rgba,rgb,cv.COLOR_RGBA2RGB);
     var gray=new cv.Mat(); cv.cvtColor(rgb,gray,cv.COLOR_RGB2GRAY);
-    // fond estimé par gros flou -> gain = 255/fond (éclaircit ombres, blanchit papier)
-    var kk=Math.max(11, Math.round(Math.min(rgb.rows,rgb.cols)/8)); if(kk%2===0)kk++; if(kk>151)kk=151;
-    var bg=new cv.Mat(); cv.medianBlur(gray, bg, Math.min(kk,99));
-    var bgF=new cv.Mat(); bg.convertTo(bgF, cv.CV_32F, 1, 1); // +1 pour éviter /0
-    var gain=new cv.Mat(); cv.divide(255.0, bgF, gain); // gain = 255/bg
-
-    var chans=new cv.MatVector(); cv.split(rgb, chans);
+    var kk=Math.max(11,Math.round(Math.min(rgb.rows,rgb.cols)/8)); if(kk%2===0)kk++; if(kk>99)kk=99;
+    var bg=new cv.Mat(); cv.medianBlur(gray,bg,kk);
+    var bgF=new cv.Mat(); bg.convertTo(bgF,cv.CV_32F,1,1);
+    var gain=new cv.Mat(); cv.divide(255.0,bgF,gain);
+    var chans=new cv.MatVector(); cv.split(rgb,chans);
     var outCh=new cv.MatVector();
     for(var i=0;i<3;i++){
-      var f=new cv.Mat(); chans.get(i).convertTo(f, cv.CV_32F);
-      cv.multiply(f, gain, f);
-      var u=new cv.Mat(); f.convertTo(u, cv.CV_8U); // clamp auto à 255
+      var f=new cv.Mat(); chans.get(i).convertTo(f,cv.CV_32F);
+      cv.multiply(f,gain,f);
+      var u=new cv.Mat(); f.convertTo(u,cv.CV_8U);
       outCh.push_back(u); f.delete(); u.delete();
     }
-    var merged=new cv.Mat(); cv.merge(outCh, merged);
-    merged.convertTo(merged, -1, 1.06, -6); // léger gain de contraste
-
+    var merged=new cv.Mat(); cv.merge(outCh,merged);
+    merged.convertTo(merged,-1,1.06,-6);
     var result;
     if(toGray){ var g2=new cv.Mat(); cv.cvtColor(merged,g2,cv.COLOR_RGB2GRAY); result=g2; merged.delete(); }
     else result=merged;
-
-    rgb.delete();gray.delete();bg.delete();bgF.delete();gain.delete();
-    chans.delete(); outCh.delete();
+    rgb.delete();gray.delete();bg.delete();bgF.delete();gain.delete();chans.delete();outCh.delete();
     return result;
   }
-
-  // Repli sans OpenCV : recadrage à la boîte englobante + éclaircissement simple.
   function fallbackRender(srcCanvas, corners, mode){
     var xs=corners.map(function(p){return p.x;}), ys=corners.map(function(p){return p.y;});
     var x0=Math.max(0,Math.floor(Math.min.apply(null,xs))), y0=Math.max(0,Math.floor(Math.min.apply(null,ys)));
@@ -511,66 +416,12 @@
   }
 
   /* =======================================================================
-     Extraction des propriétés (heuristiques FR)
+     Champs
      ======================================================================= */
-  function parseReceipt(text){
-    var norm=(text||'').replace(/ /g,' ');
-    var lines=norm.split('\n').map(function(l){return l.trim();}).filter(function(l){return l.length;});
-    var upper=norm.toUpperCase();
-    function amountsIn(str){ return str.match(/\d{1,4}[.,]\d{2}(?!\d)/g)||[]; }
-    function toNum(s){ return parseFloat(String(s).replace(/\s/g,'').replace(',','.')); }
-    var total='';
-    var priority=[/NET\s*(?:A|À)\s*PAYER/i,/TOTAL\s*T\.?T\.?C/i,/\bTOTAL\b/i,/MONTANT/i,/A\s*PAYER/i];
-    outer:
-    for(var p=0;p<priority.length;p++){
-      for(var i=0;i<lines.length;i++){
-        if(priority[p].test(lines[i])){
-          var a=amountsIn(lines[i]); if(!a.length&&lines[i+1]) a=amountsIn(lines[i+1]);
-          if(a.length){ total=a[a.length-1]; break outer; }
-        }
-      }
-    }
-    if(!total){ var all=amountsIn(norm); if(all.length){ all.sort(function(a,b){return toNum(b)-toNum(a);}); total=all[0]; } }
-    var currency='EUR';
-    if(/€|EUR/i.test(upper)) currency='EUR';
-    else if(/\$|USD/.test(upper)) currency='USD';
-    else if(/£|GBP/.test(upper)) currency='GBP';
-    else if(/CHF/.test(upper)) currency='CHF';
-    var date='';
-    var dm=norm.match(/\b(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})\b/);
-    if(dm){ var dd=dm[1].padStart(2,'0'),mm=dm[2].padStart(2,'0'),yy=dm[3]; if(yy.length===2)yy='20'+yy; date=dd+'/'+mm+'/'+yy; }
-    var tva=''; var tm=norm.match(/T\.?V\.?A\.?[^0-9]{0,12}(\d{1,4}[.,]\d{2})/i); if(tm) tva=tm[1];
-    var merchant='';
-    for(var kk=0;kk<Math.min(lines.length,6);kk++){
-      var l=lines[kk], letters=(l.match(/[A-Za-zÀ-ÿ]/g)||[]).length;
-      if(letters>=3 && !/\d{1,2}[\/.\-]\d/.test(l) && !/^\W+$/.test(l) && !/TICKET|CAISSE|MERCI|RECU|REÇU/i.test(l)){
-        merchant=l.replace(/\s{2,}/g,' ').slice(0,60); break;
-      }
-    }
-    var ticketNumber=''; var tk=norm.match(/(?:TICKET|RECU|RE[ÇC]U|N[°ºo])\s*[:#]?\s*([A-Z0-9\-]{3,})/i); if(tk) ticketNumber=tk[1];
-    var category=guessCategory(upper, merchant.toUpperCase());
-    return { merchant:merchant, date:date, category:category, total:total, currency:currency, tva:tva, ticketNumber:ticketNumber };
-  }
-  function guessCategory(upper, merchantUp){
-    var map=[
-      ['Carburant', /TOTAL\s?ACCESS|ESSO|SHELL|BP\b|AVIA|CARBURANT|GAZOLE|SP95|SP98|STATION|E\.?LECLERC.?ENERG/],
-      ['Alimentation / Courses', /CARREFOUR|AUCHAN|LIDL|ALDI|INTERMARCH|LECLERC|CASINO|MONOPRIX|FRANPRIX|SUPER\s?U|HYPER|SPAR|PICARD|BIOCOOP|MARCH[EÉ]|BOULANGERIE|SUPERMARCH/],
-      ['Restauration', /RESTAURANT|BRASSERIE|CAF[EÉ]|MCDO|MC\s?DONALD|BURGER|KFC|PIZZA|SUSHI|BAR\b|BOUCHON|KEBAB|SNACK/],
-      ['Santé / Pharmacie', /PHARMACIE|PARAPHARM|DOCTEUR|M[EÉ]DICAL|OPTICIEN|LABORATOIRE/],
-      ['Transport', /SNCF|RATP|UBER|TAXI|P[EÉ]AGE|PARKING|BUS|M[EÉ]TRO|BLABLA/],
-      ['Vêtements', /ZARA|H&M|UNIQLO|KIABI|DECATHLON|CELIO|JULES|GAP|PRIMARK|CHAUSSURE|V[EÉ]TEMENT/],
-      ['Électronique', /FNAC|DARTY|BOULANGER|APPLE|SAMSUNG|LDLC|MICRO|INFORMATIQUE/],
-      ['Maison / Bricolage', /LEROY\s?MERLIN|CASTORAMA|BRICO|IKEA|CONFORAMA|BUT\b|JARDIN|MR\s?BRICOLAGE/],
-      ['Loisirs', /CIN[EÉ]MA|LIVRE|JEU|SPORT|PISCINE|MUS[EÉ]E|CONCERT/]
-    ];
-    var hay=merchantUp+' '+upper;
-    for(var i=0;i<map.length;i++){ if(map[i][1].test(hay)) return map[i][0]; }
-    return '';
-  }
-  function fillForm(f, rawText){
+  function fillForm(f){
     $('fMerchant').value=f.merchant||''; $('fDate').value=f.date||'';
     $('fTotal').value=f.total||''; $('fCurrency').value=f.currency||'';
-    $('fTva').value=f.tva||''; $('fTicket').value=f.ticketNumber||''; $('fRaw').value=rawText||'';
+    $('fTva').value=f.tva||''; $('fTicket').value=f.ticketNumber||'';
     var sel=$('fCategory'); sel.value='';
     if(f.category){ for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===f.category){ sel.value=f.category; break; } } }
   }
@@ -581,34 +432,21 @@
   $('btnSend').addEventListener('click', function(){
     var btn=$('btnSend');
     if(!state.cropReady || !$('scanCanvas').width){ showStatus('err','Applique d\'abord le rognage.'); return; }
-    var dataUrl=$('scanCanvas').toDataURL('image/jpeg', 0.92);
-    var base64=dataUrl.split(',')[1];
-    var fields={
-      merchant:$('fMerchant').value.trim(), date:$('fDate').value.trim(), category:$('fCategory').value,
-      total:$('fTotal').value.trim(), currency:$('fCurrency').value.trim(),
-      tva:$('fTva').value.trim(), ticketNumber:$('fTicket').value.trim()
-    };
+    var base64=$('scanCanvas').toDataURL('image/jpeg',0.92).split(',')[1];
+    var fields={ merchant:$('fMerchant').value.trim(), date:$('fDate').value.trim(), category:$('fCategory').value,
+      total:$('fTotal').value.trim(), currency:$('fCurrency').value.trim(), tva:$('fTva').value.trim(), ticketNumber:$('fTicket').value.trim() };
     var slug=(fields.merchant||'ticket').replace(/[^A-Za-z0-9]+/g,'-').slice(0,30);
     var dateSlug=(fields.date||'').replace(/[^0-9]/g,'')||String(Date.now());
-    var payload={ imageBase64:base64, mimeType:'image/jpeg', filename:'ticket-'+slug+'-'+dateSlug+'.jpg', rawText:$('fRaw').value, fields:fields };
+    var payload={ imageBase64:base64, mimeType:'image/jpeg', filename:'ticket-'+slug+'-'+dateSlug+'.jpg', fields:fields };
 
-    btn.disabled=true; var old=btn.innerHTML; btn.innerHTML='<span class="spinner"></span> Envoi…';
-    $('status').style.display='none';
-    if(!(window.google&&google.script&&google.script.run)){
+    btn.disabled=true; var old=btn.innerHTML; btn.innerHTML='<span class="spinner"></span> Envoi…'; $('status').style.display='none';
+    runServer('saveReceipt', payload).then(function(res){
       btn.disabled=false; btn.innerHTML=old;
-      showStatus('err',"google.script.run indisponible : ouvre l'application via l'URL du web app Apps Script.");
-      return;
-    }
-    google.script.run
-      .withSuccessHandler(function(res){
-        btn.disabled=false; btn.innerHTML=old;
-        showStatus('ok','✅ Enregistré !<br>📄 <a href="'+res.url+'" target="_blank" rel="noopener">Voir le scan dans Drive</a><br>📊 <a href="'+res.sheetUrl+'" target="_blank" rel="noopener">Ouvrir le Google Sheet</a>');
-      })
-      .withFailureHandler(function(err){
-        btn.disabled=false; btn.innerHTML=old;
-        showStatus('err','❌ '+(err&&err.message?err.message:err));
-      })
-      .saveReceipt(payload);
+      showStatus('ok','✅ Enregistré !<br>📄 <a href="'+res.url+'" target="_blank" rel="noopener">Voir le scan dans Drive</a><br>📊 <a href="'+res.sheetUrl+'" target="_blank" rel="noopener">Ouvrir le Google Sheet</a>');
+    }).catch(function(err){
+      btn.disabled=false; btn.innerHTML=old;
+      showStatus('err','❌ '+(err&&err.message?err.message:err));
+    });
   });
   </script>
 </body>
